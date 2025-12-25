@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>IoT Health Monitor</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  body {
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+    background: #f4f9fb;
+    color: #333;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 50px auto;
+    padding: 20px;
+    display: none;
+  }
+
+  h1 {
+    text-align: center;
+    font-weight: 700;
+    color: #0b3d91;
+    margin-bottom: 40px;
+  }
+
+  .modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    opacity: 0;
+    animation: fadeIn 0.5s forwards;
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+
+  .modal-content {
+    background: #fff;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 600px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  }
+
+  .modal-content h2 {
+    color: #0b3d91;
+    margin-bottom: 20px;
+  }
+
+  .developers {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .developer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 120px;
+    transition: transform 0.3s;
+  }
+
+  .developer:hover {
+    transform: scale(1.05);
+  }
+
+  .developer img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 10px;
+    border: 2px solid #0b3d91;
+  }
+
+  .developer span {
+    font-weight: 500;
+  }
+
+  .close-btn {
+    margin-top: 20px;
+    padding: 10px 25px;
+    background: #0b3d91;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-right: 10px;
+  }
+
+  .close-btn:hover {
+    background: #0651b5;
+  }
+
+  .cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .card {
+    flex: 1 1 45%;
+    background: #ffffff;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+  }
+
+  .card .icon {
+    font-size: 40px;
+    margin-bottom: 15px;
+    color: #0b3d91;
+  }
+
+  .card .icon.heart-beat {
+    animation: pulse 1s infinite;
+    color: red;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+
+  .card .label {
+    font-size: 18px;
+    font-weight: 500;
+    color: #555;
+  }
+
+  .card .value {
+    font-size: 36px;
+    font-weight: 700;
+    margin-top: 5px;
+    color: #00bfa5;
+  }
+
+  canvas {
+    background: #fff;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    margin-top: 40px;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 12px;
+    color: #888;
+  }
+
+  @media (max-width: 768px) {
+    .cards { flex-direction: column; gap: 15px; }
+    .card { flex: 1 1 100%; padding: 20px; }
+    .modal-content { max-width: 90%; padding: 20px; }
+    .developer { width: 100px; }
+    .developer img { width: 80px; height: 80px; }
+    h1 { font-size: 24px; margin-bottom: 20px; }
+    .card .label { font-size: 16px; }
+    .card .value { font-size: 28px; }
+    .close-btn { font-size: 14px; padding: 8px 20px; }
+  }
+
+  @media (max-width: 480px) {
+    h1 { font-size: 20px; }
+    .card .value { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="modal" id="introModal">
+  <div class="modal-content">
+    <h2>Students from Sharnbasav University</h2>
+    <div class="developers">
+      <div class="developer">
+        <img src="bhagyashree.jpg" alt="Bhagyashree Patil">
+        <span>Bhagyashree Patil</span>
+      </div>
+      <div class="developer">
+        <img src="chetana.jpg" alt="Chetana Patil">
+        <span>Chetana Patil</span>
+      </div>
+      <div class="developer">
+        <img src="supriya.jpg" alt="Supriya Hiremath">
+        <span>Supriya Hiremath</span>
+      </div>
+      <div class="developer">
+        <img src="boy.webp" alt="Developer 4">
+        <span>Developer 4</span>
+      </div>
+    </div>
+    <button class="close-btn" onclick="closeModal()">Enter Dashboard</button>
+    <button class="close-btn" onclick="closeModal()">Skip</button>
+  </div>
+</div>
+
+<div class="container" id="dashboard">
+  <h1>IoT Health Monitor</h1>
+
+  <div class="cards">
+    <div class="card">
+      <div class="icon">🌡️</div>
+      <div class="label">Body Temperature</div>
+      <div class="value" id="temp">-- °C</div>
+    </div>
+
+    <div class="card">
+      <div class="icon" id="heartIcon">❤️</div>
+      <div class="label">Heart Rate (BPM)</div>
+      <div class="value" id="bpm">--</div>
+    </div>
+  </div>
+
+  <canvas id="chart" width="900" height="400"></canvas>
+
+  <footer>
+    ESP8266 + ThingSpeak | Educational Purpose Only
+  </footer>
+</div>
+
+<script>
+function closeModal() {
+  document.getElementById('introModal').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+}
+
+setTimeout(closeModal, 5000);
+
+const channelID = 3212769;
+const url = `https://api.thingspeak.com/channels/${channelID}/feeds.json?results=20`;
+
+let labels = [];
+let tempData = [];
+let bpmData = [];
+
+const ctx = document.getElementById('chart').getContext('2d');
+const chart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [
+      { label: 'Temperature (°C)', data: tempData, borderColor: '#ff6384', backgroundColor: 'rgba(255,99,132,0.1)', fill: true, tension: 0.4 },
+      { label: 'Heart Rate (BPM)', data: bpmData, borderColor: '#36a2eb', backgroundColor: 'rgba(54,162,235,0.1)', fill: true, tension: 0.4 }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top', labels: { font: { size: 14 } } },
+      tooltip: { mode: 'index', intersect: false }
+    },
+    interaction: { mode: 'nearest', axis: 'x', intersect: false },
+    scales: {
+      x: { display: true, title: { display: true, text: 'Time', font: { size: 14 } } },
+      y: { beginAtZero: true, title: { display: true, text: 'Value', font: { size: 14 } } }
+    }
+  }
+});
+
+function fetchData() {
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      labels.length = 0; tempData.length = 0; bpmData.length = 0;
+
+      data.feeds.forEach(feed => {
+        const time = new Date(feed.created_at);
+        labels.push(time.toLocaleTimeString());
+
+        tempData.push(feed.field1 ? parseFloat(feed.field1) : null);
+        bpmData.push(feed.field2 ? parseFloat(feed.field2)*60 : null);
+      });
+
+      const latestFeed = data.feeds[data.feeds.length-1];
+      const temp = latestFeed.field1 ? parseFloat(latestFeed.field1) : "--";
+      const bpm = latestFeed.field2 ? parseFloat(latestFeed.field2)*60 : "--";
+
+      document.getElementById("temp").innerText = temp + " °C";
+      document.getElementById("bpm").innerText = bpm;
+
+      const heartIcon = document.getElementById("heartIcon");
+      if(bpm !== "--" && bpm > 0){
+        heartIcon.classList.add("heart-beat");
+      } else {
+        heartIcon.classList.remove("heart-beat");
+      }
+
+      document.getElementById("bpm").style.color = (bpm !== "--" && bpm > 100) ? "red" : "#00bfa5";
+      document.getElementById("temp").style.color = (temp !== "--" && temp > 38) ? "red" : "#00bfa5";
+
+      chart.update();
+    })
+    .catch(err => console.log("Error fetching data:", err));
+}
+
+fetchData();
+setInterval(fetchData, 15000);
+</script>
+
+</body>
+</html>
